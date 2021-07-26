@@ -1,0 +1,203 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+
+    <link rel="stylesheet" href="{% static 'style.css' %}" />
+    <script src="{% static 'reconnecting-websocket.js' %}"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+    
+
+	<!-- JavaScript Bundle with Popper -->
+    <div class="container">
+
+        <!-- Page header start -->
+        <div class="page-title">
+            <div class="row gutters">
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+                    <h5 class="title">Chat App</h5>
+                </div>
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12"> </div>
+            </div>
+        </div>
+        <!-- Page header end -->
+    
+        <!-- Content wrapper start -->
+        <div class="content-wrapper">
+    
+            <!-- Row start -->
+            <div class="row gutters">
+    
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+    
+                    <div class="card m-0">
+    
+                        <!-- Row start -->
+                        <div class="row no-gutters">
+                            <div class="col-xl-8 col-lg-8 col-md-8 col-sm-9 col-9">
+                                <div class="selected-user">
+                                    <span>User: <span class="name">{{ username }}</span></span>
+                                    <span>
+                                        <div class="pagination">
+                                            <p>View old messages</p>
+                                            <button id="btn-load-old" href="#">❮</button>
+                                            <button id="btn-load-new" href="#">❯</button>
+                                        </div>
+                                    </span>
+                                    
+                                </div>
+                                <div class="chat-container">
+                                    <ul id="chat-log" class="chat-box chatContainerScroll">
+                                        
+                                    </ul>
+                                    <div class="form-group mt-3 mb-0">
+                                        <input id="chat-message-input" type="text" size="50" placeholder="Type the message here">
+                                    </div><br>
+                                    <input id="chat-message-submit" class="btn btn-primary" type="button" value="Send">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    
+    </div>
+    {{ room_name|json_script:"room-name" }}
+    <script>
+        // const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        var roomName =  {{ room_name }};
+        var userName = {{ username }};
+
+        var pageNo = 1;
+    
+        const chatSocket = new ReconnectingWebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+            + roomName
+            + '/'
+        );
+
+        chatSocket.onopen = function(e){
+            console.log(pageNo);
+            fetchMessages();
+        }
+
+        function fetchMessages(){
+            //console.log("Hi")
+            chatSocket.send(JSON.stringify(
+                {
+                    'command': 'fetch_messages',
+                    'pageNo': pageNo
+                }
+            ));
+        }
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            // console.log(data);
+            if(data['command'] === 'messages'){
+                for(let i=data['messages'].length-1;i>=0; i--){
+                    createChatMessage(data['messages'][i]);
+                }
+            } else if(data['command']=='new_message'){
+                createChatMessage(data['message']);
+            }
+        };
+
+        function createChatMessage(message){
+            // console.log('createChatMessage');
+            // console.log(message);
+            var ul = document.getElementById("chat-log");
+            var li = document.createElement("li");
+            var author = message['author'];
+        
+            let divChatHour = document.createElement("div");
+            divChatHour.setAttribute('class', 'chat-hour');
+
+            let time = document.createTextNode("08:56");
+            divChatHour.appendChild(time);
+
+            let span = document.createElement("span");
+            span.setAttribute('class', 'fa fa-check-circle');
+            divChatHour.appendChild(span);
+
+            let divChatText = document.createElement("div");
+            divChatText.setAttribute('class', 'chat-text');
+            let chatText = document.createTextNode(message['content']);
+            divChatText.appendChild(chatText);
+
+            let divChatAvatar = document.createElement("div");
+            divChatAvatar.setAttribute('class', 'chat-avatar');
+
+            let divChatName = document.createElement("div");
+            divChatName.setAttribute('class', 'chat-name');
+            let authorNameText = document.createTextNode(author);
+            divChatName.appendChild(authorNameText);
+            divChatAvatar.appendChild(divChatName);
+
+            if(author === userName){
+                // Own Message
+                li.setAttribute('class', 'chat-right');
+                li.appendChild(divChatHour);
+                li.appendChild(divChatText);
+                li.appendChild(divChatAvatar);
+            } else {
+                // Replies from others
+                li.setAttribute('class', 'chat-left');
+                li.appendChild(divChatAvatar);
+                li.appendChild(divChatText);
+                li.appendChild(divChatHour);
+            }
+            ul.appendChild(li);
+        }
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        function validateMessage(message){
+            if (message == null || message == "") {
+                alert("Please Type Something!!");
+                return false;
+            }
+            return true;
+        }
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            if(validateMessage(message)){
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'command': 'new_message',
+                    'from': userName
+                }));
+                messageInputDom.value = '';
+            }
+        };
+
+
+        document.querySelector('#btn-load-old').onclick = function(e) {
+            pageNo++;
+            var ul = document.getElementById("chat-log");
+            while (parent.firstChild) {
+                parent.firstChild.remove()
+            }
+            fetchMessages();
+        };
+    </script>
+</body>
+</html>
