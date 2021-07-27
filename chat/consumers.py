@@ -1,4 +1,3 @@
-from chat.views import room
 import json
 from channels import auth
 from django.contrib.auth import get_user_model
@@ -8,6 +7,7 @@ from django.core.paginator import Paginator
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import Message, Room
+from chat.views import room
 
 
 User = get_user_model()
