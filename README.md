@@ -31,7 +31,7 @@ Local Machine:
 host: http://localhost:8000
 
 Heroku:
-host: 
+host: https://chit-chatting-new.herokuapp.com/
 
 ### Step 1 - Open Browser and login to django admin portal using by using following url (Repeat the same in Browsers incognito mode)
 {host}/admin/
