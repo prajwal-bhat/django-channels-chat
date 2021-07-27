@@ -27,6 +27,11 @@ It has a paginated REST API to get the history of messages and django channels i
 
 
 ## Running the project
+Local Machine: 
+host: http://localhost:8000
+
+Heroku:
+host: 
 
 ### Step 1 - Open Browser and login to django admin portal using by using following url (Repeat the same in Browsers incognito mode)
 {host}/admin/

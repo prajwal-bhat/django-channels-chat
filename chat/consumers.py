@@ -32,8 +32,6 @@ class ChatConsumer(WebsocketConsumer):
             'command': 'new_message',
             'message': self.message_to_json(message)
         }
-        print("new mesage id: ")
-        print(message.id)
         return self.send_chat_message(content)
 
 
@@ -86,14 +84,13 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
-                'type': 'receive_event_message',
+                'type': 'send_read_event',
                 'from': username,
                 'messageId': message_id
             }
         )
         
-
-    def receive_event_message(self, event):
+    def send_read_event(self, event):
         username = event['from']
         message_id = event['messageId']
         content = {
@@ -113,7 +110,11 @@ class ChatConsumer(WebsocketConsumer):
                 'message': data
             }
         )
-        self.send_read_receipts(data['message'])
+        user_id = self.scope["session"]["_auth_user_id"]
+        current_user = User.objects.filter(id=user_id)[0]
+        author = data['message']['author']
+        if author is not current_user:
+            self.send_read_receipts(data['message'])
 
 
     def send_message(self, message):
