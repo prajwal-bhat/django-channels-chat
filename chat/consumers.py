@@ -1,3 +1,4 @@
+from chat.views import room
 import json
 from channels import auth
 from django.contrib.auth import get_user_model
@@ -6,7 +7,7 @@ from django.core.checks import messages
 from django.core.paginator import Paginator
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
-from .models import Message
+from .models import Message, Room
 
 
 User = get_user_model()
@@ -14,19 +15,22 @@ User = get_user_model()
 class ChatConsumer(WebsocketConsumer):
 
     def fetch_messages(self, data):
-        messages = Message.last_20_messages()
+        room_name = self.scope['url_route']['kwargs']['room_name']
+        roomMessages = Message.objects.filter(room = room_name).order_by('-timestamp')[:30]
         content = {
             'command': 'messages',
-            'messages': self.messages_to_json(messages)
+            'messages': self.messages_to_json(roomMessages)
         }
         self.send_message(content)
 
 
     def new_message(self, data):
         author = data['from']
+        room_name = self.scope['url_route']['kwargs']['room_name']
         author_user = User.objects.filter(username=author)[0]
         message = Message.objects.create(
                             author=author_user, 
+                            room = room_name,
                             content=data['message'])
         content = {
             'command': 'new_message',
@@ -57,7 +61,6 @@ class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
-
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
