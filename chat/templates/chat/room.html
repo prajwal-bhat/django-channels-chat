@@ -102,7 +102,7 @@
                 }
             } else if(data['command']=='new_message'){
                 createChatMessage(data['message']);
-            } else if(data['command']=='read_event'){
+            } else if(data['command']=='read_receipt'){
                 sendReadReceipts(data);
             }
         }
@@ -110,6 +110,7 @@
         function sendReadReceipts(data){
             let msgId = data['messageId'];
             let author = data['from']
+
             if(author === userName){
                 var div = document.getElementById(msgId);
                 div.style.visibility = 'visible';
@@ -149,22 +150,38 @@
             let authorNameText = document.createTextNode(author);
             divChatName.appendChild(authorNameText);
             divChatAvatar.appendChild(divChatName);
-
+            let isRead = message['is_read'];
+            console.log(message);
+            console.log(isRead);
             if(author === userName){
                 // Own Message
                 li.setAttribute('class', 'chat-right');
-                divChatHour.style.visibility = 'visible';
+                if(isRead){
+                    divChatHour.style.visibility = 'visible';
+                }
                 li.appendChild(divChatHour);
                 li.appendChild(divChatText);
                 li.appendChild(divChatAvatar);
+                ul.appendChild(li);
             } else {
                 // Replies from others
                 li.setAttribute('class', 'chat-left');
                 li.appendChild(divChatAvatar);
                 li.appendChild(divChatText);
                 li.appendChild(divChatHour);
+                ul.appendChild(li);
+                if(isRead){
+                    generateReadEvent(messageId);
+                }
             }
-            ul.appendChild(li);
+        }
+
+        function generateReadEvent(messageId){
+            chatSocket.send(JSON.stringify({
+                    'messageId': messageId,
+                    'command': 'read_event',
+                    'from': userName
+                }));
         }
 
         chatSocket.onclose = function(e) {

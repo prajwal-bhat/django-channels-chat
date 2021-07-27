@@ -50,13 +50,25 @@ class ChatConsumer(WebsocketConsumer):
             'id': message.id,
             'author': message.author.username,
             'content': message.content,
+            'is_read': message.is_read,
             'timestamp': str(message.timestamp)
         }
     
+
+    def read_event(self, data):
+        message_id = data['messageId']
+        message = Message.objects.get(id = message_id)
+        message.is_read = True
+        author = message.author.username
+        message.save()
+        self.generate_read_receipts(message_id, author)
+
     commands = {
         "fetch_messages": fetch_messages,
-        "new_message": new_message
+        "new_message": new_message,
+        "read_event": read_event,
     }
+
 
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -81,24 +93,22 @@ class ChatConsumer(WebsocketConsumer):
         self.commands[data['command']](self, data)
 
     
-    def send_read_receipts(self, message):
-        username = message['author']
-        message_id = message['id']
+    def generate_read_receipts(self, message_id, author):
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
-                'type': 'send_read_event',
-                'from': username,
-                'messageId': message_id
+                'type': 'send_read_receipt',
+                'to': author,
+                'message_id': message_id
             }
         )
         
-    def send_read_event(self, event):
-        username = event['from']
-        message_id = event['messageId']
+    def send_read_receipt(self, event):
+        username = event['to']
+        message_id = event['message_id']
         content = {
-            'command': 'read_event',
-            'from': username,
+            'command': 'read_receipt',
+            'to': username,
             'messageId': message_id
         }
         # Send message to WebSocket
@@ -113,11 +123,6 @@ class ChatConsumer(WebsocketConsumer):
                 'message': data
             }
         )
-        user_id = self.scope["session"]["_auth_user_id"]
-        current_user = User.objects.filter(id=user_id)[0]
-        author = data['message']['author']
-        if author is not current_user:
-            self.send_read_receipts(data['message'])
 
 
     def send_message(self, message):
