@@ -2,6 +2,7 @@ import json
 from channels import auth
 from django.contrib.auth import get_user_model
 from django.core import paginator
+from django.core.checks import messages
 from django.core.paginator import Paginator
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
@@ -13,11 +14,7 @@ User = get_user_model()
 class ChatConsumer(WebsocketConsumer):
 
     def fetch_messages(self, data):
-        page_no = data['pageNo']
-        page_no = 1 if page_no<1 else page_no
-        messagesObj = Message.objects.order_by('-timestamp').all()
-        paginator = Paginator(messagesObj, 10)
-        messages = paginator.page(page_no)
+        messages = Message.last_20_messages()
         content = {
             'command': 'messages',
             'messages': self.messages_to_json(messages)
@@ -35,6 +32,8 @@ class ChatConsumer(WebsocketConsumer):
             'command': 'new_message',
             'message': self.message_to_json(message)
         }
+        print("new mesage id: ")
+        print(message.id)
         return self.send_chat_message(content)
 
 
@@ -46,6 +45,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def message_to_json(self, message):
         return {
+            'id': message.id,
             'author': message.author.username,
             'content': message.content,
             'timestamp': str(message.timestamp)
@@ -79,18 +79,46 @@ class ChatConsumer(WebsocketConsumer):
         data = json.loads(text_data)
         self.commands[data['command']](self, data)
 
-    def send_chat_message(self, message):
+    
+    def send_read_receipts(self, message):
+        username = message['author']
+        message_id = message['id']
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'receive_event_message',
+                'from': username,
+                'messageId': message_id
+            }
+        )
+        
+
+    def receive_event_message(self, event):
+        username = event['from']
+        message_id = event['messageId']
+        content = {
+            'command': 'read_event',
+            'from': username,
+            'messageId': message_id
+        }
+        # Send message to WebSocket
+        self.send(text_data=json.dumps(content))
+
+    def send_chat_message(self, data):
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message
+                'message': data
             }
         )
+        self.send_read_receipts(data['message'])
+
 
     def send_message(self, message):
         self.send(text_data=json.dumps(message))
+        
 
     # Receive message from room group
     def chat_message(self, event):

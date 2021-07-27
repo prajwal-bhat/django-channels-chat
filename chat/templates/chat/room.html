@@ -42,13 +42,13 @@
                             <div class="col-xl-8 col-lg-8 col-md-8 col-sm-9 col-9">
                                 <div class="selected-user">
                                     <span>User: <span class="name">{{ username }}</span></span>
-                                    <span>
+                                    <!-- <span>
                                         <div class="pagination">
                                             <p>View old messages</p>
                                             <button id="btn-load-old" href="#">❮</button>
                                             <button id="btn-load-new" href="#">❯</button>
                                         </div>
-                                    </span>
+                                    </span> -->
                                     
                                 </div>
                                 <div class="chat-container">
@@ -73,7 +73,6 @@
         var roomName =  {{ room_name }};
         var userName = {{ username }};
 
-        var pageNo = 1;
     
         const chatSocket = new ReconnectingWebSocket(
             'ws://'
@@ -84,35 +83,42 @@
         );
 
         chatSocket.onopen = function(e){
-            console.log(pageNo);
             fetchMessages();
         }
 
         function fetchMessages(){
-            //console.log("Hi")
             chatSocket.send(JSON.stringify(
                 {
-                    'command': 'fetch_messages',
-                    'pageNo': pageNo
+                    'command': 'fetch_messages'
                 }
             ));
         }
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            // console.log(data);
             if(data['command'] === 'messages'){
                 for(let i=data['messages'].length-1;i>=0; i--){
                     createChatMessage(data['messages'][i]);
                 }
             } else if(data['command']=='new_message'){
                 createChatMessage(data['message']);
+            } else if(data['command']=='read_event'){
+                sendReadReceipts(data);
             }
-        };
+        }
+
+        function sendReadReceipts(data){
+            let msgId = data['messageId'];
+            let author = data['from']
+            if(author === userName){
+                var div = document.getElementById(msgId);
+                div.style.visibility = 'visible';
+            }
+        }
 
         function createChatMessage(message){
             // console.log('createChatMessage');
-            // console.log(message);
+            var messageId = message['id'];
             var ul = document.getElementById("chat-log");
             var li = document.createElement("li");
             var author = message['author'];
@@ -120,12 +126,15 @@
             let divChatHour = document.createElement("div");
             divChatHour.setAttribute('class', 'chat-hour');
 
-            let time = document.createTextNode("08:56");
-            divChatHour.appendChild(time);
+            // let time = document.createTextNode("08:56");
+            // divChatHour.appendChild(time);
 
             let span = document.createElement("span");
             span.setAttribute('class', 'fa fa-check-circle');
             divChatHour.appendChild(span);
+            divChatHour.setAttribute('id', messageId);
+
+            divChatHour.style.visibility = 'hidden';
 
             let divChatText = document.createElement("div");
             divChatText.setAttribute('class', 'chat-text');
@@ -144,6 +153,7 @@
             if(author === userName){
                 // Own Message
                 li.setAttribute('class', 'chat-right');
+                divChatHour.style.visibility = 'visible';
                 li.appendChild(divChatHour);
                 li.appendChild(divChatText);
                 li.appendChild(divChatAvatar);
@@ -190,14 +200,14 @@
         };
 
 
-        document.querySelector('#btn-load-old').onclick = function(e) {
-            pageNo++;
-            var ul = document.getElementById("chat-log");
-            while (parent.firstChild) {
-                parent.firstChild.remove()
-            }
-            fetchMessages();
-        };
+        // document.querySelector('#btn-load-old').onclick = function(e) {
+        //     pageNo++;
+        //     var ul = document.getElementById("chat-log");
+        //     while (parent.firstChild) {
+        //         parent.firstChild.remove()
+        //     }
+        //     fetchMessages();
+        // };
     </script>
 </body>
 </html>
