@@ -36,19 +36,21 @@ host: http://chit-chat-with-everyone.herokuapp.com/chat
 ### Step 1 - Open Browser and login to django admin portal using by using following url 
 http://chit-chat-with-everyone.herokuapp.com/admin/
 
-(Repeat the same in Browsers incognito mode)
-### Step 2 - Open Browser and login to django admin portal using by using following url 
+### Step 2 - Open Browsers incognito mode or different browser and login to django admin portal using by using following url 
 http://chit-chat-with-everyone.herokuapp.com/admin/
 
-### Step 3 - Enter the room-name to join in the following site in both the windows. (In both the browsers)
+### Step 3 - Enter the room-name to join in the following url in both the windows. (In both the browsers)
 http://chit-chat-with-everyone.herokuapp.com/chat/
 
-### Step 4 - In the newly opened site of the particular room. Start typing the message.
+### Step 4 - Start typing the message in the newly opened site of the particular room.
 http://chit-chat-with-everyone.herokuapp.com/chat/<room_name>/
 
-### Step 5 - In the newly opened site of the particular room. Start typing the message.
+### Step 5 - Start typing the message in the newly opened site of the particular room in the other browser
 http://chit-chat-with-everyone.herokuapp.com/chat/<room_name>/
 
-### Step 6 - Read Receipts will get updated if the message is read by the receipient. Reload the browser to see the read receipts.
+### Step 6 - Read Receipts will get updated if the message is read by the receipient. Reload the browser to see if the messages read by receipients.
+
+### Step 7 - REST API is exposed to get the all the history of messages in a room.
+http://chit-chat-with-everyone.herokuapp.com/api/<room_name>/new/<page_no>
 
 #### Note: Currently https is not configured. Hence please use http only

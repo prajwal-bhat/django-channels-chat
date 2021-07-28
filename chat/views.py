@@ -25,17 +25,19 @@ def room(request, room_name):
     })
 
 
+'''
+REST API exposed to get the chat history messages with pagination 
+'''
 @api_view(['GET'])
 def get_chat_messages_paginated(request, room_name, pk):
-    pass
-    # GET all chats for the room
-    # page_size = 30
-    # messagesObj = Message.objects.order_by('-timestamp').all()
-    # paginator = Paginator(messagesObj, page_size)
-    # try:
-    #     messages = paginator.page(pk)
-    # except EmptyPage:
-    #     messages = paginator.page(1)
-    # if request.method == "GET":
-    #     messages_serialized = MessageSerializer(messages, many=True)
-    #     return JsonResponse(messages_serialized.data, safe=False)
+    # GET all chats for the room 
+    page_size = 30
+    messagesObj = Message.objects.filter(room = room_name).order_by('-timestamp').all()
+    paginator = Paginator(messagesObj, page_size)
+    try:
+        messages = paginator.page(pk)
+    except EmptyPage:
+        messages = paginator.page(1)
+    if request.method == "GET":
+        messages_serialized = MessageSerializer(messages, many=True)
+        return JsonResponse(messages_serialized.data, safe=False)
