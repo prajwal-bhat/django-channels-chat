@@ -2,10 +2,11 @@ from os import name
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.core.paginator import EmptyPage, Paginator
 from chat.models import Message, Room
 from chat.serializers import MessageSerializer
+from django.shortcuts import redirect
 
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -16,6 +17,9 @@ import json
 def index(request):
     return render(request, 'chat/index.html', {})
 
+
+def redirect_to_admin_page(request):
+    return redirect("/admin/login/")
 
 @login_required
 def room(request, room_name):
