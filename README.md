@@ -31,26 +31,24 @@ Local Machine:
 host: http://localhost:8000
 
 Heroku:
-host: http://chit-chat-with-everyone.herokuapp.com/chat
+host: 
 
 ### Step 1 - Open Browser and login to django admin portal using by using following url 
-http://chit-chat-with-everyone.herokuapp.com/admin/
+http://localhost:8000/admin/
 
 ### Step 2 - Open Browsers incognito mode or different browser and login to django admin portal using by using following url 
-http://chit-chat-with-everyone.herokuapp.com/admin/
+http://localhost:8000/admin/
 
 ### Step 3 - Enter the room-name to join in the following url in both the windows. (In both the browsers)
-http://chit-chat-with-everyone.herokuapp.com/chat/
+http://localhost:8000/chat/
 
 ### Step 4 - Start typing the message in the newly opened site of the particular room.
-http://chit-chat-with-everyone.herokuapp.com/chat/<room_name>/
+http://localhost:8000/chat/<room_name>/
 
 ### Step 5 - Start typing the message in the newly opened site of the particular room in the other browser
-http://chit-chat-with-everyone.herokuapp.com/chat/<room_name>/
+http://localhost:8000/chat/<room_name>/
 
 ### Step 6 - Read Receipts will get updated if the message is read by the receipient. Reload the browser to see if the messages read by receipients.
 
 ### Step 7 - REST API is exposed to get the all the history of messages in a room.
-http://chit-chat-with-everyone.herokuapp.com/api/<room_name>/new/<page_no>
-
-#### Note: Currently https is not configured. Hence please use http only
+http://localhost:8000/api/<room_name>/new/<page_no>
